@@ -1,0 +1,29 @@
+{
+  "name": "gol",
+  "version": "0.0.1",
+  "authors": [
+    "Tuomas Nylund <tunylund@gmail.com>"
+  ],
+  "description": "a variant of game of life",
+  "main": "src/gol.js",
+  "moduleType": [
+    "globals"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "three.js": "*",
+    "importable": "https://github.com/tunylund/importable.git",
+    "pixi": "~2.1.1"
+  },
+  "devDependencies": {
+    "underscore": "~1.7.0"
+  }
+}

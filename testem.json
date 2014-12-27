@@ -1,0 +1,10 @@
+{
+  "framework": "mocha+chai",
+  "src_files": [
+    "bower_components/three.js/three.js",
+    "bower_components/underscore/underscore.js",
+    "bower_components/importable/src/import.js",
+    "src/**/*.js",
+    "test/**/*.js"
+  ]
+}
