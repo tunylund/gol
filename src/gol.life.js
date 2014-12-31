@@ -1,12 +1,7 @@
-_import.module('gol.life').promise('life', 'others', function(_export) {
+_import.module('gol.life').promise('life', function(_export) {
 
-  var others = [], flocks = []
-  _export('others', others)
-  
-  var Animal = _import('Animal').from('gol.animal'),
-      Tick = _import('Tick').from('gol.tick'),
+  var Tick = _import('Tick').from('gol.tick'),
       TickBase = _import('TickBase').from('gol.tick'),
-      SphereBodily = _import('SphereBodily').from('gol.objects'),
       Threat = _import('Threat').from('gol.threat'),
       Flock = _import('Flock').from('gol.entity'),
       env = _import('env').from('gol'),
@@ -37,37 +32,34 @@ _import.module('gol.life').promise('life', 'others', function(_export) {
     }
 
     var flockRunner = fpsRunner(function(diff, now) {
-      invoke(others, 'move', diff, now)
-      invoke(flocks, 'move', diff, now)
-      invoke(flocks, function() {
-        invoke(this.animals, 'move', diff, now)
-      })
+      invoke(Threat.collection, 'move', diff, now)
+      invoke(Flock.collection, 'move', diff, now)
+      invoke(Tick.collection, 'move', diff, now)
+      invoke(TickBase.collection, 'move', diff, now)
     }, 24)
     fps(flockRunner)
     runner(function (diff, now) {
-      invoke(others, 'tick', diff, now)
-      invoke(flocks, 'tick', diff, now)
-      invoke(flocks, function() {
-        invoke(this.animals, 'tick', diff, now)
-      })
+      invoke(Threat.collection, 'tick', diff, now)
+      invoke(Flock.collection, 'tick', diff, now)
+      invoke(Tick.collection, 'tick', diff, now)
+      invoke(TickBase.collection, 'tick', diff, now)
     });
 
 
     function birth() {
-      var base = new TickBase()
-      base.position = new THREE.Vector3(m.pn(m.r(100)), m.pn(m.r(100)))
-      base.tick()
-      others.push(base)
-      flocks.push(new Flock(Tick, 64, base))
+      var b = new TickBase(new THREE.Vector3(m.pn(m.r(100)), m.pn(m.r(100))))
+      b.radius = 3
+      b.refresh()
     }
     birth()
     setTimeout(birth, 2000)
     setTimeout(birth, 4000)
     //setTimeout(birth, 6000)
+    //setTimeout(birth, 10000)
+    //setTimeout(birth, 12000)
 
     setTimeout(function() {
-      var threat = new Threat();
-      others.push(threat)
+      var threat = new Threat(TickBase);
       var threatTick = fpsRunner(function (diff, now) {
         threat.preTick()
         threat.tick()

@@ -3,10 +3,9 @@ _import.module('gol.threat').promise('Threat', function(_export) {
   var env = _import('env').from('gol'), 
       Bodily = _import('Bodily').from('gol.entity'),
       Meshed = _import('Meshed').from('gol.entity'),
-      movement = _import('movement').from('gol'),
-      others = _import('others').from('gol.life')
+      movement = _import('movement').from('gol')
 
-  function Threat() {
+  function Threat(Victim) {
     Bodily.call(this, 20, new CANNON.Box(new CANNON.Vec3(5, 5, 5)))
     Meshed.call(this, new THREE.Mesh( 
       new THREE.BoxGeometry(10, 10, 10), 
@@ -16,9 +15,12 @@ _import.module('gol.threat').promise('Threat', function(_export) {
         opacity: .8
       })
     ));
+    this.Victim = Victim
     this.maxSpeed = 20
     this.position = movement().random(10).value()
+    Threat.collection.push(this)
   }
+  Threat.collection = []
 
   Threat.prototype = Object.create(Bodily.prototype)
  
@@ -34,15 +36,14 @@ _import.module('gol.threat').promise('Threat', function(_export) {
       m.z = 0
       this.body.applyForce(m, this.position)
     }
-    others.forEach(function(o) {
-      if(o != this) {
-        if(o.position.distanceTo(this.position) < 100) {
-          this.body.applyForce(
-            movement().gravity(this.position, o.position, 10).value(),
-            this.position)
-        }
+    for(var i=0, l=this.Victim.collection.length; i<l; i++) {
+      var o = this.Victim.collection[i]
+      if(o.position.distanceTo(this.position) < 100) {
+        this.body.applyForce(
+          movement().gravity(this.position, o.position, 10).value(),
+          this.position)
       }
-    }.bind(this))
+    }
 
     if(this.position.distanceTo(new THREE.Vector3()) > 80) {
       this.body.applyForce(
@@ -55,11 +56,6 @@ _import.module('gol.threat').promise('Threat', function(_export) {
   Threat.prototype.tick = function(diff, now) {
     Bodily.prototype.tick.apply(this, arguments);
     Meshed.prototype.tick.apply(this, arguments)
-    /*
-    this.acceleration.add(movement(this.velocity)
-                          .decelerateAtLimit(this.position, new THREE.Vector3(), 80)
-                          .value())
-    */
   }
 
   _export('Threat', Threat)

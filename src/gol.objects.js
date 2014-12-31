@@ -1,4 +1,4 @@
-_import.module('gol.objects').promise('Sphere', 'BodilySphere', 'Line', function(_export) {
+_import.module('gol.objects').promise('Sphere', 'SphereBodily', 'Line', function(_export) {
 
   var env = _import('env').from('gol'), 
       Entity = _import('Entity').from('gol.entity'),

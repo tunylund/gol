@@ -90,6 +90,9 @@ _import.module('gol.entity').promise('Entity', 'Meshed', 'Bodily', 'ParticleBodi
       this.body.quaternion.w
     )
   }
+  Meshed.prototype.refresh = function() {
+    this._mesh.geometry.verticesNeedUpdate = true
+  }
   _export('Meshed', Meshed)
 
 

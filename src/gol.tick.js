@@ -1,20 +1,21 @@
-_import.module('gol.tick').promise('Tick', 'TickBase', function(_export) {
+_import.module('gol.tick').promise('Tick', function(_export) {
 
   var m = _import('math').from('gol'),
+      Flock = _import('Flock').from('gol.entity'),
       Flocky = _import('Flocky').from('gol.entity'),
-      Bodily = _import('Bodily').from('gol.entity'),
-      Meshed = _import('Meshed').from('gol.entity'),
+      Threat = _import('Threat').from('gol.threat'),
       ParticleBodily = _import('ParticleBodily').from('gol.entity'),
-      movement = _import('movement').from('gol'),
-      others = _import('others').from('gol.life')
+      movement = _import('movement').from('gol')
 
   function Tick() {
     ParticleBodily.call(this, 1)
     Flocky.apply(this, arguments)
+    Tick.collection.push(this)
   }
 
   Tick.prototype = Object.create(ParticleBodily.prototype)
   Tick.prototype.constructor = Tick
+  Tick.collection = []
 
   Object.defineProperty(Tick.prototype, 'speed', { value: 1 });
   Object.defineProperty(Tick.prototype, 'repelRadius', { value: 5 });
@@ -23,24 +24,87 @@ _import.module('gol.tick').promise('Tick', 'TickBase', function(_export) {
 
   Tick.prototype.move = function() {
     ParticleBodily.prototype.move.apply(this, arguments)
+
     this.flock.refresh()
+
     if(this.flock.threat) {
       if(this.flock.threat.position.distanceTo(this.base.position) < this.visibilityRadius) {
         this.attack(this.flock.threat)
       } else {
         this.threaten(this.flock.threat)
       }
-    } else {
-      this.swarm()
-      others.forEach(function(o) {
-        if(!(o instanceof TickBase)) {
-        if(o.position.distanceTo(this.position) < this.visibilityRadius) {
-          if(o.position.distanceTo(this.base.position) < this.flock.threatRadius) {
-            this.flock.threat = o;
-          }
-        }}
-      }.bind(this))
+    } 
+
+    if(this.flock.nurture) {
+      this.nurture(this.flock.nurture)
+      this.lookForThreats()
     }
+
+    else if(this.flock.mateWith) {
+      this.mate(this.flock.matePos)
+      this.lookForThreats()
+    } 
+
+    else {
+      this.swarm()
+      this.lookForThreats() || this.lookForInfantBases() || this.lookForMates()
+    }
+  }
+
+  Tick.prototype.lookForThreats = function() {
+    var i, l, o;
+    for(i=0, l=Threat.collection.length; i<l; i++) {
+      o = Threat.collection[i]
+      if(o.position.distanceTo(this.position) < this.visibilityRadius) {
+        if(o.position.distanceTo(this.base.position) < this.flock.threatRadius) {
+          this.flock.threaten(o);
+        }
+      }
+    }
+    return this.flock.threat
+  }
+
+  Tick.prototype.lookForInfantBases = function() {
+    var i, l, bases = this.base.constructor.collection, b;
+
+    if(this.base.isInfant()) {
+      this.flock.nurture = this.base
+    } else  {
+      for(i=0, l=bases.length; i<l; i++) {
+        b = bases[i]
+        if(b.position.distanceTo(this.position) < this.visibilityRadius && b.isInfant()) {
+          this.flock.nurture = b
+          break;
+        }
+      }
+    }
+    return this.flock.nurture
+  }
+
+  Tick.prototype.lookForMates = function() {
+    var i, l, f, flocks = Flock.collection, a, j, k;
+    for(i=0, l=flocks.length; i<l; i++) {
+      f = flocks[i]
+      if(f != this.flock) {
+      if(!f.mateWith) {
+      if(this.flock.matedWith.indexOf(f) == -1) {
+        for(j=0, k=f.animals.length; j<k; j++) {
+          a = f.animals[j]
+          if(a.position.distanceTo(this.position) < this.visibilityRadius) {
+            this.flock.mate(f, a.position.clone())
+            break;
+          }
+        }
+      }}}
+      if(this.flock.mateWith) break;
+    }
+    return !!this.flock.mateWith
+  }
+
+  Tick.prototype.mate = function(position) {
+    this.body.applyForce(
+      movement().gravity(this.position, position, this.speed*2).value(),
+      this.position)
   }
 
   Tick.prototype.clamp = function() {
@@ -70,23 +134,20 @@ _import.module('gol.tick').promise('Tick', 'TickBase', function(_export) {
     )
   }
 
-  Tick.prototype.fall = function() {
-    var p = new THREE.Vector3(this.position.x, this.position.y, this.position.z)
+  Tick.prototype.nurture = function(target) {
     this.body.applyForce(
       movement()
-      .gravity(p, this.base.position, this.speed*10)
+      .gravity(this.position, target.position, this.speed*10)
       .value(), 
-    this.position
-    )
+      this.position)
   }
 
   Tick.prototype.attack = function(target) {
     this.body.applyForce(
       movement()
-        .gravity(this.position, target.position, this.speed*10)
-        .value(),
+      .gravity(this.position, target.position, this.speed*10)
+      .value(), 
       this.position)
-    
   }
 
   Tick.prototype.threaten = function(target) {
@@ -125,10 +186,10 @@ _import.module('gol.tick').promise('Tick', 'TickBase', function(_export) {
         approach = [
           a[(i + Math.floor(l/2))%l]
         ],
-        alignWith = [
+        alignWith = a.length > 1 ? [
           a[(i + 2)%l],
           a[i - 2] || a[l + (i - 2)]
-        ],
+        ] : [],
         p = this.position,
         v = this.velocity
 
@@ -148,31 +209,4 @@ _import.module('gol.tick').promise('Tick', 'TickBase', function(_export) {
 
   _export('Tick', Tick)
 
-
-
-
-  function TickBase() {
-    Bodily.call(this, this.mass, new CANNON.Sphere(this.radius));
-    Meshed.call(this, new THREE.Mesh( 
-      new THREE.SphereGeometry(this.radius, 32, 32), 
-      new THREE.MeshBasicMaterial({
-        color: 0x222222,
-        transparent: true,
-        opacity: 1
-      })
-    ));
-  }
-  TickBase.prototype = Object.create(Bodily.prototype)
-  TickBase.prototype.constructor = TickBase
-  Object.defineProperty(TickBase.prototype, 'radius', { value: 10 })
-  Object.defineProperty(TickBase.prototype, 'mass', { value: 0 })
-
-  TickBase.prototype.move = function() {}
-  TickBase.prototype.tick = function() {
-    Bodily.prototype.tick.apply(this, arguments)
-    Meshed.prototype.tick.apply(this, arguments)
-  }
-
-  _export('TickBase', TickBase)
-    
 })
