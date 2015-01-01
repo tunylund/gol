@@ -45,25 +45,46 @@ _import.module('gol.life').promise('life', function(_export) {
       invoke(TickBase.collection, 'tick', diff, now)
     });
 
-
     function birth() {
       var b = new TickBase(new THREE.Vector3(m.pn(m.r(100)), m.pn(m.r(100))))
       b.radius = 3
       b.refresh()
     }
-    birth()
-    setTimeout(birth, 2000)
-    setTimeout(birth, 4000)
-    //setTimeout(birth, 6000)
-    //setTimeout(birth, 10000)
-    //setTimeout(birth, 12000)
+    function basesWithThreat() {
+      birth()
+      setTimeout(birth, 2000)
+      setTimeout(birth, 4000)
+      //setTimeout(birth, 6000)
+      //setTimeout(birth, 10000)
+      //setTimeout(birth, 12000)
 
-    setTimeout(function() {
-      var threat = new Threat(TickBase);
-      var threatTick = fpsRunner(function (diff, now) {
-        threat.preTick()
-        threat.tick()
-      }, 24)
-    }, 0)
+      setTimeout(function() {
+        var threat = new Threat(TickBase);
+        var threatTick = fpsRunner(function (diff, now) {
+          threat.preTick()
+          threat.tick()
+        }, 24)
+      }, 0)
+    }
+
+    function bases() {
+      birth()
+      birth()
+    }
+
+    function ticks() {
+      var a = { position: new CANNON.Vec3(0,-10,0), radius: 10 }
+      var b = { position: new CANNON.Vec3(0,10,0), radius: 10 }
+      var fa = new Flock(a)
+      var fb = new Flock(b)
+      while(Tick.collection.length < 20) {
+        fa.create(Tick)
+      }
+      while(Tick.collection.length < 40) {
+        fb.create(Tick)
+      }
+    }
+
+    basesWithThreat()
   })
 })

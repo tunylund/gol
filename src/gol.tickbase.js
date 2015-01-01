@@ -25,7 +25,7 @@ _import.module('gol.tick').promise('TickBase', function(_export) {
   TickBase.prototype.constructor = TickBase
   Object.defineProperty(TickBase.prototype, 'radius', { value: 1, writable: true })
   Object.defineProperty(TickBase.prototype, 'baseRadius', { value: 5 })
-  Object.defineProperty(TickBase.prototype, 'maxRadius', { value: 10 })
+  Object.defineProperty(TickBase.prototype, 'maxRadius', { value: 20 })
   Object.defineProperty(TickBase.prototype, 'mass', { value: 0 })
 
   TickBase.prototype.isInfant = function() {
@@ -38,10 +38,10 @@ _import.module('gol.tick').promise('TickBase', function(_export) {
       for(i=0, l=Tick.collection.length; i<l; i++) {
         a = Tick.collection[i]
         if(a.position.distanceTo(this.position) < this.radius + 2) {
-          c += a.velocity.norm2()
+          c += a.body.force.norm2()
         } 
       }
-      if(c > this.radius*this.radius) {
+      if(Math.sqrt(c) > this.radius*this.radius) {
         this.radius += .1
         this.refresh()
       }
@@ -62,9 +62,10 @@ _import.module('gol.tick').promise('TickBase', function(_export) {
   TickBase.prototype.tick = function() {
     Bodily.prototype.tick.apply(this, arguments)
     Meshed.prototype.tick.apply(this, arguments)
+    if(Tick.collection.length < 256) {
     if(this.radius*this.baseRadius > this.flock.animals.length) {
       this.flock.create(Tick)
-    }
+    }}
   }
 
   _export('TickBase', TickBase)

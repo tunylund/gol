@@ -103,6 +103,7 @@ _import.module('gol.entity').promise('Entity', 'Meshed', 'Bodily', 'ParticleBodi
     });
     this.body.addShape(shape);
     env.world.add(this.body);
+    this.id = _.uniqueId('bodily')
   }
   Bodily.prototype.tick = function() {}
   Object.defineProperty(Bodily.prototype, 'position', {

@@ -26,7 +26,7 @@ _import.module('gol.tick').promise('Tick', function(_export) {
     ParticleBodily.prototype.move.apply(this, arguments)
 
     this.flock.refresh()
-
+    
     if(this.flock.threat) {
       if(this.flock.threat.position.distanceTo(this.base.position) < this.visibilityRadius) {
         this.attack(this.flock.threat)
@@ -82,6 +82,7 @@ _import.module('gol.tick').promise('Tick', function(_export) {
   }
 
   Tick.prototype.lookForMates = function() {
+    if(this.base.constructor.collection.length > 6) return false;
     var i, l, f, flocks = Flock.collection, a, j, k;
     for(i=0, l=flocks.length; i<l; i++) {
       f = flocks[i]
@@ -135,11 +136,19 @@ _import.module('gol.tick').promise('Tick', function(_export) {
   }
 
   Tick.prototype.nurture = function(target) {
-    this.body.applyForce(
+    if(this.position.distanceTo(this.base.position) < this.base.radius+1) {
+      this.body.applyForce(
       movement()
-      .gravity(this.position, target.position, this.speed*10)
+      .gravity(this.position, target.position, this.speed*-2)
       .value(), 
       this.position)
+    } else {
+      this.body.applyForce(
+        movement()
+        .gravity(this.position, target.position, this.speed*10)
+        .value(), 
+        this.position)
+    }
   }
 
   Tick.prototype.attack = function(target) {
@@ -152,15 +161,17 @@ _import.module('gol.tick').promise('Tick', function(_export) {
 
   Tick.prototype.threaten = function(target) {
     var i = this.flock.animals.indexOf(this),
-        variance = Math.sqrt(this.flock.animals.length),
-        flockPos = new THREE.Vector3(Math.floor(i/variance)-variance/2, i%variance - variance/2,0),
-        d = flockPos.length(),
+        l = this.flock.animals.length,
+        theta = i * m.goldenAngle,
+        r = Math.sqrt(i) / Math.sqrt(l),
+        flockPos = new THREE.Vector3(r * Math.cos(theta), r * Math.sin(theta), 0),
         t = new THREE.Vector3(target.position.x, target.position.y, target.position.z),
         baseToTarget = t.clone().sub(this.base.position),
         absPointBetween = this.base.position.clone().vadd(baseToTarget.multiplyScalar(.5)),
         dir = new THREE.Matrix4().lookAt(this.base.position, t, m.up)
 
-    flockPos.transformDirection(dir).setLength(d)
+
+    flockPos.transformDirection(dir).multiplyScalar(i*.25)
     var pointPosBetween = absPointBetween.vadd(flockPos)
     
     this.body.applyForce(
@@ -200,6 +211,7 @@ _import.module('gol.tick').promise('Tick', function(_export) {
       movement()
       .approach(p, approach, this.speed)
       .limit(10)
+      .random(4)
       .gravity(p, this.base.position, this.speed)
       .decelerateAtLimit(p, this.base.position, this.visibilityRadius, v)
       .value(),

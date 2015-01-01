@@ -49,7 +49,7 @@ _import.module('gol').promise('main', 'env', 'math', 'movement', 'filter', 'fps'
       env.camera.position.add(vel.multiplyScalar(60*t))
       env.camera.lookAt( env.scene.position );
     }
-    //runner(rotate)
+    runner(rotate)
 
     window.addEventListener( 'resize', onWindowResize, false );
     function onWindowResize() {
@@ -76,7 +76,8 @@ _import.module('gol').promise('main', 'env', 'math', 'movement', 'filter', 'fps'
     },
     up: new THREE.Vector3(0,1,0),
     center: new THREE.Vector3(0,0,0),
-    one: new THREE.Vector3(1,1,1)
+    one: new THREE.Vector3(1,1,1),
+    goldenAngle: Math.PI * (3 - Math.sqrt(5))
   }
   _export('math', math)
 
