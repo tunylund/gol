@@ -1,6 +1,7 @@
 _import.module('gol.entity').promise('Flock', 'Flocky', function(_export) {
 
   var env = _import('env').from('gol'),
+      Threat = _import('Threat').from('gol.threat'),
       m = _import('math').from('gol')
 
   function isBadPosition(pos, collection) {
@@ -65,6 +66,23 @@ _import.module('gol.entity').promise('Flock', 'Flocky', function(_export) {
     
     this.pointCloud.material.attributes.size.value.push(animal.size)
     env.scene.remove(this.pointCloud)
+    this.pointCloud.geometry.dispose()
+    this.pointCloud = new THREE.PointCloud(geometry, this.pointCloud.material)
+    env.scene.add(this.pointCloud)
+  }
+
+  Flock.prototype.remove = function(animal) {
+    this.animals.splice(this.animals.indexOf(animal), 1)
+    animal.flock = null
+
+    var geometry = new THREE.Geometry();
+    for(var i=0, l=this.animals.length; i<l; i++) {
+      geometry.vertices.push(this.animals[i].vertice)
+    }
+    
+    this.pointCloud.material.attributes.size.value.push(animal.size)
+    env.scene.remove(this.pointCloud)
+    this.pointCloud.geometry.dispose()
     this.pointCloud = new THREE.PointCloud(geometry, this.pointCloud.material)
     env.scene.add(this.pointCloud)
   }
@@ -94,7 +112,7 @@ _import.module('gol.entity').promise('Flock', 'Flocky', function(_export) {
   }
 
   Flock.prototype.move = function() {
-    if(this.threat) {
+    if(this.threat && this.base) {
       if(this.threat.position.distanceTo(this.base.position) > this.threatRadius) {
         this.threat = null
       } 
@@ -105,7 +123,7 @@ _import.module('gol.entity').promise('Flock', 'Flocky', function(_export) {
       }
     }
     if(this.mateWith) {
-      if(isBadPosition(this.matePos, this.base.constructor.collection)) {
+      if(!this.base || isBadPosition(this.matePos, this.base.constructor.collection)) {
         this.mate(null)
       } else {
         var i, l, a, c=0;
@@ -125,6 +143,28 @@ _import.module('gol.entity').promise('Flock', 'Flocky', function(_export) {
   
   Flock.prototype.tick = function(){}
 
+  Flock.prototype.destroy = function() {
+    var i, l, a, c=0;
+    for(i=0, l=this.animals.length; i<l; i++) {
+      this.animals[i].base = null
+    }
+    for(i=0, l=Flock.collection.length; i<l; i++) {
+      if(Flock.collection[i].nurture == this.base) {
+        Flock.collection[i].nurture = null
+      }
+    }
+    this.threat = null
+    for(i=0, l=Threat.collection.length; i<l; i++) {
+      this.threat = this.threat || Threat.collection[i]
+      if(Threat.collection[i].position.distanceTo(this.base.position) < 
+        this.threat.position.distanceTo(this.base.position)) {
+        this.threat = Threat.collection[i]
+      }
+    }
+    this.mate(null)
+    this.base = null
+  }
+
   Flock.collection = []
 
   _export('Flock', Flock)
@@ -132,6 +172,9 @@ _import.module('gol.entity').promise('Flock', 'Flocky', function(_export) {
 
   function Flocky() {}
   Flocky.prototype.move = function() {}
+  Flocky.prototype.destroy = function() {
+    this.flock.remove(this)
+  }
   _export('Flocky', Flocky)
 
 });

@@ -79,6 +79,11 @@ _import.module('gol.entity').promise('Entity', 'Meshed', 'Bodily', 'ParticleBodi
     this._mesh = mesh
     env.scene.add(this._mesh);
   }
+  Meshed.prototype.destroy = function() {
+    env.scene.remove(this._mesh)
+    this._mesh.geometry.dispose()
+    this._mesh = null
+  }
   Meshed.prototype.tick = function() {
     this._mesh.position.x = this.position.x
     this._mesh.position.y = this.position.y
@@ -105,6 +110,10 @@ _import.module('gol.entity').promise('Entity', 'Meshed', 'Bodily', 'ParticleBodi
     env.world.add(this.body);
     this.id = _.uniqueId('bodily')
   }
+  Bodily.prototype.destroy = function() {
+    env.world.remove(this.body)
+    this.body = null;
+  }
   Bodily.prototype.tick = function() {}
   Object.defineProperty(Bodily.prototype, 'position', {
     get: function() {
@@ -119,6 +128,10 @@ _import.module('gol.entity').promise('Entity', 'Meshed', 'Bodily', 'ParticleBodi
       return this.body.velocity
     }
   })
+  Bodily.prototype.destroy = function() {
+    env.world.remove(this.body);
+    this.body = null;
+  }
   _export('Bodily', Bodily)
 
 
@@ -130,6 +143,11 @@ _import.module('gol.entity').promise('Entity', 'Meshed', 'Bodily', 'ParticleBodi
   }
   ParticleBodily.prototype = Object.create(Bodily.prototype)
   ParticleBodily.prototype.constructor = ParticleBodily;
+  ParticleBodily.prototype.destroy = function() {
+    Bodily.prototype.destroy.call(this)
+    env.sph.remove(this.body)
+    this.vertice = null
+  }
   ParticleBodily.prototype.move = function() {}
   ParticleBodily.prototype.tick = function() {
     Bodily.prototype.tick.apply(this)

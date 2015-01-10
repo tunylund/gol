@@ -24,7 +24,7 @@ _import.module('gol.tick').promise('TickBase', function(_export) {
   TickBase.prototype = Object.create(Bodily.prototype)
   TickBase.prototype.constructor = TickBase
   Object.defineProperty(TickBase.prototype, 'radius', { value: 1, writable: true })
-  Object.defineProperty(TickBase.prototype, 'baseRadius', { value: 5 })
+  Object.defineProperty(TickBase.prototype, 'baseRadius', { value: 10 })
   Object.defineProperty(TickBase.prototype, 'maxRadius', { value: 20 })
   Object.defineProperty(TickBase.prototype, 'mass', { value: 0 })
 
@@ -46,6 +46,14 @@ _import.module('gol.tick').promise('TickBase', function(_export) {
         this.refresh()
       }
     }
+    if(this.radius <= 0) {
+      this.destroy()
+    }
+  }
+
+  TickBase.prototype.shrink = function() {
+    this.radius -= 1
+    this.refresh()
   }
 
   TickBase.prototype.refresh = function() {
@@ -66,6 +74,15 @@ _import.module('gol.tick').promise('TickBase', function(_export) {
     if(this.radius*this.baseRadius > this.flock.animals.length) {
       this.flock.create(Tick)
     }}
+  }
+
+  TickBase.prototype.destroy = function() {
+    this.flock.destroy()
+    this.flock = null
+    Bodily.prototype.destroy.apply(this, arguments)
+    Meshed.prototype.destroy.apply(this, arguments)
+    TickBase.collection[TickBase.collection.indexOf(this)] = null
+    //TickBase.collection.splice(TickBase.collection.indexOf(this), 1)
   }
 
   _export('TickBase', TickBase)

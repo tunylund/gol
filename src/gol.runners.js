@@ -44,7 +44,7 @@ _import.module('gol').promise('fpsRunner', 'runner', function(_export) {
     stop.fps = 0
 
     var frame = function(now) {
-      diff = now - lastTime
+      diff = Math.min(now - lastTime, 60)
       lastTime = now;
       r = requestAnimationFrame(frame)
       tick(diff, now)

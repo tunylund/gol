@@ -3,6 +3,7 @@ _import.module('gol.life').promise('life', function(_export) {
   var Tick = _import('Tick').from('gol.tick'),
       TickBase = _import('TickBase').from('gol.tick'),
       Threat = _import('Threat').from('gol.threat'),
+      TriangleThreat = _import('TriangleThreat').from('gol.threat'),
       Flock = _import('Flock').from('gol.entity'),
       env = _import('env').from('gol'),
       m = _import('math').from('gol')
@@ -15,7 +16,7 @@ _import.module('gol.life').promise('life', function(_export) {
 
     env.world.solver.tolerance = 0.001;
     var physicsRunner = runner(function(diff) {
-      env.world.step(1/20, diff)
+      env.world.step(1/60, diff)
     })
     fps(physicsRunner)
 
@@ -29,6 +30,10 @@ _import.module('gol.life').promise('life', function(_export) {
           fn.call(collection[i], diff, now)
         }
       }
+      var i;
+      while((i = collection.indexOf(null)) > -1) {
+        collection.splice(i, 1)
+      } 
     }
 
     var flockRunner = fpsRunner(function(diff, now) {
@@ -58,13 +63,7 @@ _import.module('gol.life').promise('life', function(_export) {
       //setTimeout(birth, 10000)
       //setTimeout(birth, 12000)
 
-      setTimeout(function() {
-        var threat = new Threat(TickBase);
-        var threatTick = fpsRunner(function (diff, now) {
-          threat.preTick()
-          threat.tick()
-        }, 24)
-      }, 0)
+      var threat = new TriangleThreat(TickBase);
     }
 
     function bases() {
@@ -83,6 +82,92 @@ _import.module('gol.life').promise('life', function(_export) {
       while(Tick.collection.length < 40) {
         fb.create(Tick)
       }
+    }
+
+    function tri() {
+      var target = {collection: [{
+        position: new CANNON.Vec3(40, 40, 0)
+      }]}
+      var t = new THREE.Mesh( 
+        new THREE.SphereGeometry(5, 8, 8), 
+        new THREE.MeshBasicMaterial({
+          color: 0xff6666,
+          transparent: true,
+          opacity: 1
+        }))
+        t.position.set(40,40,0)
+      var b = new CANNON.Body({
+          mass: 0
+        });
+        b.addShape(new CANNON.Sphere(5));
+        b.position.set(100,100,0)
+      
+      env.world.add(b);
+      env.scene.add(t);
+
+      var t = new TriangleThreat(target)
+      t.grow();t.grow();t.grow();t.grow();t.grow();t.grow();t.grow();t.grow();
+      
+    }
+
+    function collisions() {
+      birth()
+      var threat = new Threat(TickBase);
+      threat.move = function(){}
+      threat.body.mass = 0
+      Flock.collection[0].threat = threat
+      setTimeout(function(){
+      Tick.collection.forEach(function(t) {
+        t.base=null
+      })
+      }, 500)
+
+      setInterval(function() {
+        threat.position = new THREE.Vector3()
+      }, 4000)
+    }
+
+    function trit() {
+      var TriangleCube = _import('TriangleCube').from('gol.shapes')
+          TriangleCubeMaterial = _import('TriangleCubeMaterial').from('gol.shapes')
+      var t;
+      function render() {
+        if(t) {
+          env.scene.remove(t)
+          t.geometry.dispose()
+        }
+        t = new THREE.Mesh( 
+                  TriangleCube(8), 
+                  TriangleCubeMaterial())
+        env.scene.add(t)
+      }
+      fpsRunner(render, .2)
+      render()
+      /*runner(function(diff, now) {
+        t.material.uniforms.time.value += diff
+        t.material.uniforms.diff.value = diff
+      })*/
+    }
+    function tric() {
+      var TriangleCloud = _import('TriangleCloud').from('gol.shapes')
+          TriangleCloudMaterial = _import('TriangleCloudMaterial').from('gol.shapes')
+      var t;
+      function render() {
+        if(t) {
+          env.scene.remove(t)
+          t.geometry.dispose()
+        }
+        t = new THREE.PointCloud( 
+                  TriangleCloud(128/8, 128), 
+                  TriangleCloudMaterial())
+        env.scene.add(t)
+      }
+      fpsRunner(render, .2)
+      render()
+      runner(function(diff, now) {
+        t.material.uniforms.time.value += diff
+        t.material.uniforms.diff.value = diff
+      })
     }
 
     basesWithThreat()

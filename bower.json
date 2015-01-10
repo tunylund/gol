@@ -21,7 +21,8 @@
   "dependencies": {
     "three.js": "*",
     "importable": "https://github.com/tunylund/importable.git",
-    "pixi": "~2.1.1"
+    "pixi": "~2.1.1",
+    "cannon.js": "~0.6.1"
   },
   "devDependencies": {
     "underscore": "~1.7.0"

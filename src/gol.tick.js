@@ -4,38 +4,57 @@ _import.module('gol.tick').promise('Tick', function(_export) {
       Flock = _import('Flock').from('gol.entity'),
       Flocky = _import('Flocky').from('gol.entity'),
       Threat = _import('Threat').from('gol.threat'),
+      TickBase,
       ParticleBodily = _import('ParticleBodily').from('gol.entity'),
-      movement = _import('movement').from('gol')
+      movement = _import('movement').from('gol'),
+      contacts = _import('env').from('gol').world.contacts
 
   function Tick() {
-    ParticleBodily.call(this, 1)
+    ParticleBodily.call(this, .5)
     Flocky.apply(this, arguments)
     Tick.collection.push(this)
+    this.onCollision = this.onCollision.bind(this)
+    this.body.addEventListener('collide', this.onCollision)
   }
 
   Tick.prototype = Object.create(ParticleBodily.prototype)
   Tick.prototype.constructor = Tick
   Tick.collection = []
 
-  Object.defineProperty(Tick.prototype, 'speed', { value: 1 });
+  Object.defineProperty(Tick.prototype, 'speed', { value: 2 });
   Object.defineProperty(Tick.prototype, 'repelRadius', { value: 5 });
   Object.defineProperty(Tick.prototype, 'alignRadius', { value: 15 });
   Object.defineProperty(Tick.prototype, 'visibilityRadius', { value: 40 });
 
+
+  Tick.prototype.destroy = function() {
+    Tick.collection[Tick.collection.indexOf(this)] = null
+    this.body.removeEventListener('collide', this.onCollision)
+    ParticleBodily.prototype.destroy.call(this)
+    Flocky.prototype.destroy.call(this)
+  }
+
   Tick.prototype.move = function() {
     ParticleBodily.prototype.move.apply(this, arguments)
 
+
+    if(this.destroyOnTick) {
+      return this.destroy()
+    }
+
     this.flock.refresh()
-    
+
     if(this.flock.threat) {
-      if(this.flock.threat.position.distanceTo(this.base.position) < this.visibilityRadius) {
+      if(!this.base) {
+        this.attack(this.flock.threat)
+      } else if(this.flock.threat.position.distanceTo(this.base.position) < this.visibilityRadius) {
         this.attack(this.flock.threat)
       } else {
         this.threaten(this.flock.threat)
       }
     } 
 
-    if(this.flock.nurture) {
+    else if(this.flock.nurture) {
       this.nurture(this.flock.nurture)
       this.lookForThreats()
     }
@@ -51,13 +70,27 @@ _import.module('gol.tick').promise('Tick', function(_export) {
     }
   }
 
+  Tick.prototype.onCollision = function (e) {
+    var t = this.flock.threat
+    if(t) {
+      if(e.body == t.body || e.target == t.body) {
+        if(this.body.velocity.norm() > this.body.mass*10) {
+          t.shrink && t.shrink()
+          this.destroyOnTick = true
+        }
+      }
+    }
+  }
+
   Tick.prototype.lookForThreats = function() {
-    var i, l, o;
-    for(i=0, l=Threat.collection.length; i<l; i++) {
-      o = Threat.collection[i]
-      if(o.position.distanceTo(this.position) < this.visibilityRadius) {
-        if(o.position.distanceTo(this.base.position) < this.flock.threatRadius) {
-          this.flock.threaten(o);
+    if(this.base) {
+      var i, l, o;
+      for(i=0, l=Threat.collection.length; i<l; i++) {
+        o = Threat.collection[i]
+        if(o.position.distanceTo(this.position) < this.visibilityRadius) {
+          if(o.position.distanceTo(this.base.position) < this.flock.threatRadius) {
+            this.flock.threaten(o);
+          }
         }
       }
     }
@@ -67,7 +100,7 @@ _import.module('gol.tick').promise('Tick', function(_export) {
   Tick.prototype.lookForInfantBases = function() {
     var i, l, bases = this.base.constructor.collection, b;
 
-    if(this.base.isInfant()) {
+    if(this.base && this.base.isInfant()) {
       this.flock.nurture = this.base
     } else  {
       for(i=0, l=bases.length; i<l; i++) {
@@ -82,7 +115,8 @@ _import.module('gol.tick').promise('Tick', function(_export) {
   }
 
   Tick.prototype.lookForMates = function() {
-    if(this.base.constructor.collection.length > 6) return false;
+    TickBase = TickBase || _import('TickBase').from('gol.tick')
+    if(TickBase.collection.length > 6) return false;
     var i, l, f, flocks = Flock.collection, a, j, k;
     for(i=0, l=flocks.length; i<l; i++) {
       f = flocks[i]
@@ -136,7 +170,7 @@ _import.module('gol.tick').promise('Tick', function(_export) {
   }
 
   Tick.prototype.nurture = function(target) {
-    if(this.position.distanceTo(this.base.position) < this.base.radius+1) {
+    if(this.position.distanceTo(target.position) < target.radius+1) {
       this.body.applyForce(
       movement()
       .gravity(this.position, target.position, this.speed*-2)
@@ -154,9 +188,17 @@ _import.module('gol.tick').promise('Tick', function(_export) {
   Tick.prototype.attack = function(target) {
     this.body.applyForce(
       movement()
-      .gravity(this.position, target.position, this.speed*10)
+      .gravity(this.position, target.position, this.speed * 
+       (this.base ? 10 : 18))
       .value(), 
       this.position)
+
+    this.body.applyForce(
+      movement()
+        .decelerateAtAngle(this.velocity.clone().scale(40), target.position.clone().vsub(this.position), THREE.Math.degToRad(90))
+        .value(),
+      this.position)
+
   }
 
   Tick.prototype.threaten = function(target) {

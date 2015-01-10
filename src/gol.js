@@ -27,6 +27,7 @@ _import.module('gol').promise('main', 'env', 'math', 'movement', 'filter', 'fps'
     sph.viscosity = 0.03;
     sph.smoothingRadius = 1.0;
     world.subsystems.push(sph);
+    world.solver.iterations=2
     env.world = world
     env.sph = sph
 
@@ -49,7 +50,7 @@ _import.module('gol').promise('main', 'env', 'math', 'movement', 'filter', 'fps'
       env.camera.position.add(vel.multiplyScalar(60*t))
       env.camera.lookAt( env.scene.position );
     }
-    runner(rotate)
+    //runner(rotate)
 
     window.addEventListener( 'resize', onWindowResize, false );
     function onWindowResize() {
@@ -73,6 +74,9 @@ _import.module('gol').promise('main', 'env', 'math', 'movement', 'filter', 'fps'
       if(value < min) return min
       if(value > max) return max
       return value
+    },
+    sign: function(value) {
+      return value == 0 ? 1 : value / Math.abs(value)
     },
     up: new THREE.Vector3(0,1,0),
     center: new THREE.Vector3(0,0,0),
