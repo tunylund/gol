@@ -7,6 +7,6 @@ npm install -g http-server
 bower install
 grunt
 http-server
-open dest/index.html
+open http://0.0.0.0:8000/dest
 ```
 
