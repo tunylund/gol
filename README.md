@@ -2,8 +2,12 @@ gol
 ===
 
 some kind of a game of life
-
-npm install
+```
+npm install -g http-server
 bower install
-node_modules/.bin/http-server
 grunt
+node_modules/.bin/http-server
+http-server
+open dest/index.html
+```
+
