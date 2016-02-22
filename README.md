@@ -1,7 +1,7 @@
 gol
 ===
 
-some kind of a game of life
+some kind of a game of life http://tunylund.github.io/gol/
 ```
 npm install -g http-server
 bower install
